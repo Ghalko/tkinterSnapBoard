@@ -24,16 +24,15 @@ class TSB(Frame):
 		self.testframe = Frame(self.f, bd=1, relief=RAISED)
 		self.add_window(self.testframe)
 
-	def snap(self):
+	def snap(self, mx, my):
 		coords = self.canvas.coords(self._drag_data["item"])
-		x = coords[0]
-		y = coords[1]
-		dx = coords[2] - x
-		dy = coords[3] - y
-		newx = round(x/self.w) * self.w
-		newy = round(y/self.h) * self.h
+		dx = coords[2] - coords[0]
+		dy = coords[3] - coords[1]
+		newx = int(mx/self.w) * self.w
+		newy = int(my/self.h) * self.h
 		self.canvas.coords(self._drag_data["item"], newx, newy, newx+dx, newy+dy)
-		self.canvas.coords(self._drag_data["window"], newx+(self.w/2), newy+(self.h/2)+(self.buff/2))
+		if self._drag_data["window"] is not None:
+			self.canvas.coords(self._drag_data["window"], newx+(self.w/2), newy+(self.h/2)+(self.buff/2))
 
 	def show_snap(self):
 		for x in range(self.size):
@@ -63,19 +62,29 @@ class TSB(Frame):
 		'''Being drag of an object'''
 		# record the item and its location
 		self._drag_data["item"] = self.canvas.find_closest(event.x, event.y)[0]
-		x1, y1, x2, y2 = tuple(self.canvas.coords(self._drag_data["item"]))
-		self._drag_data["window"] = self.canvas.find_enclosed(x1, y1, x2, y2)[0]
+		self._drag_data["orig_coords"] = self.canvas.coords(self._drag_data["item"])
+		x1, y1, x2, y2 = tuple(self._drag_data["orig_coords"])
+		try:
+			self._drag_data["window"] = self.canvas.find_enclosed(x1, y1, x2, y2)[0]
+		except:
+			self._drag_data["window"] = None
 		self._drag_data["x"] = event.x
 		self._drag_data["y"] = event.y
+		
 
 	def OnTokenButtonRelease(self, event):
 		'''End drag of an object'''
-		self.snap()
+		#check for overlapping tokens
+		if len(self.canvas.find_overlapping(event.x-1, event.y-1, event.x+1, event.y+1)) > 1:
+			x1, y1, x2, y2 = tuple(self._drag_data["orig_coords"])
+			self.canvas.coords(self._drag_data["item"], x1, y1, x2, y2)
+		self.snap(event.x, event.y)
 		# reset the drag information
 		self._drag_data["item"] = None
 		self._drag_data["window"] = None
 		self._drag_data["x"] = 0
 		self._drag_data["y"] = 0
+		self._drag_data["orig_coords"] = []
 
 	def OnTokenMotion(self, event):
 		'''Handle dragging of an object'''

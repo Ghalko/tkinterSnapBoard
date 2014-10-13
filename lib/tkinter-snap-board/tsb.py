@@ -23,13 +23,14 @@ class TSB(Frame):
 		self.show_snap()
 		self.testframe = Frame(self.f, bd=1, relief=RAISED)
 		self.add_window(self.testframe)
+		self.remove_snap()
 
-	def snap(self, mx, my):
+	def snap(self):
 		coords = self.canvas.coords(self._drag_data["item"])
 		dx = coords[2] - coords[0]
 		dy = coords[3] - coords[1]
-		newx = int(mx/self.w) * self.w
-		newy = int(my/self.h) * self.h
+		newx = int(coords[0]/self.w) * self.w
+		newy = int(coords[1]/self.h) * self.h
 		self.canvas.coords(self._drag_data["item"], newx, newy, newx+dx, newy+dy)
 		if self._drag_data["window"] is not None:
 			self.canvas.coords(self._drag_data["window"], newx+(self.w/2), newy+(self.h/2)+(self.buff/2))
@@ -42,6 +43,9 @@ class TSB(Frame):
 				self.canvas.create_oval(dx-2, dy-2, dx+2, dy+2,
 																outline="black", fill="black",
 																tags="grid")
+
+	def remove_snap(self):
+		self.canvas.delete("grid")
 
 	def add_window(self, window, size=[1,1]):
 		self.canvas.create_window(self.w+(self.w/2),
@@ -78,7 +82,7 @@ class TSB(Frame):
 		if len(self.canvas.find_overlapping(event.x-1, event.y-1, event.x+1, event.y+1)) > 1:
 			x1, y1, x2, y2 = tuple(self._drag_data["orig_coords"])
 			self.canvas.coords(self._drag_data["item"], x1, y1, x2, y2)
-		self.snap(event.x, event.y)
+		self.snap()
 		# reset the drag information
 		self._drag_data["item"] = None
 		self._drag_data["window"] = None

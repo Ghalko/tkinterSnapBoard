@@ -4,7 +4,7 @@ class TSB(Frame):
 	"""tkinter snap board - ref:
 	http://stackoverflow.com/questions/6740855/board-drawing-code-to-move-an-oval/6789351#6789351
 	"""
-	def __init__(self, master=None, spacing=150, size=5, buff=5):
+	def __init__(self, master=None, spacing=150, size=5, buff=10):
 		self.m = master
 		self.f = Frame.__init__(self, master)
 		self.h = spacing
@@ -22,7 +22,7 @@ class TSB(Frame):
 		self.canvas.tag_bind("token", "<B1-Motion>", self.OnTokenMotion)
 		self.show_grid()
 		self.testframe = Frame(self.f, bd=1, relief=RAISED)
-		self.add_window(self.testframe)
+		self.add_window(self.testframe, cell=[1,1])
 		#self.remove_grid()
 
 	def snap_grab(self, mx, my):
@@ -64,13 +64,14 @@ class TSB(Frame):
 		self.canvas.delete("grid")
 
 	def add_window(self, window, size=[1,1], cell=None, mouse=None):
-		newx, newy = 
-		self.canvas.create_window(self.w+(self.w/2),
-															self.h+(self.h/2)+(self.buff/2),
-															window=window,
-															height=self.h-(self.buff),
-															width=self.w-(2*self.buff), tags="window")
-		#get cursor position xmouse, ymouse
+		newx, newy = self.calculate_snap(cell=cell, mouse=mouse) #grid point
+		print newx, newy
+		newh = self.h - self.buff #to show grab
+		newy = newy + self.buff + (newh / 2) #to show grab
+		newx = newx + (self.w / 2)
+		self.canvas.create_window(newx, newy, window=window,
+															height=newh, width=self.w,
+															tags="window")
 
 	def _create_token(self, coord, color):
 		'''Create a token at the given coordinate in the given color'''
@@ -86,7 +87,7 @@ class TSB(Frame):
 		self._drag_data["orig_coords"] = self.canvas.coords(self._drag_data["grab"])
 		x1, y1, x2, y2 = tuple(self._drag_data["orig_coords"])
 		try:
-			self._drag_data["window"] = self.canvas.find_enclosed(x1, y1, x2, y2)[0]
+			self._drag_data["window"] = self.canvas.find_enclosed(x1-1, y1-1, x2+1, y2+1)[0]
 		except:
 			self._drag_data["window"] = None
 		self._drag_data["x"] = event.x
@@ -96,7 +97,8 @@ class TSB(Frame):
 	def OnTokenButtonRelease(self, event):
 		'''End drag of an object'''
 		#check for overlapping tokens
-		self.snap()
+		self.snap_grab(event.x, event.y)
+		self.snap_window()
 		# reset the drag information
 		self._drag_data["grab"] = None
 		self._drag_data["window"] = None

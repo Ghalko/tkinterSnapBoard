@@ -17,9 +17,15 @@ class TSB(Frame):
 		self._drag_data = {"x": 0, "y": 0, "grab": None}
 		self._create_token("white", cell=[1,1])
 		self._create_token("black", cell=[2,2])
-		self.canvas.tag_bind("token", "<ButtonPress-1>", self.OnTokenButtonPress)
-		self.canvas.tag_bind("token", "<ButtonRelease-1>", self.OnTokenButtonRelease)
-		self.canvas.tag_bind("token", "<B1-Motion>", self.OnTokenMotion)
+		self.canvas.tag_bind("token", "<ButtonPress-1>",
+							 self.OnTokenButtonPress)
+		self.canvas.tag_bind("token", "<ButtonRelease-1>",
+							 self.OnTokenButtonRelease)
+		self.canvas.tag_bind("token", "<B1-Motion>",
+							 self.OnTokenMotion)
+		self.mode = None
+		self.toggle_mode(mode="move")
+		#To be moved or removed VV
 		self.show_grid()
 		self.testframe = Frame(self.f, bd=1, relief=RAISED)
 		self.testframe2 = Frame(self.f, bd=1, relief=RAISED)
@@ -31,7 +37,7 @@ class TSB(Frame):
 		"""Snaps grab portion into cell"""
 		x1, y1, x2, y2 = tuple(self._drag_data["orig_coords"])
 		if len(self.canvas.find_overlapping(mx-1, my-1, mx+1, my+1)) <= 1:
-			x1, y1 = self.calculate_snap(mouse=[mx,my])
+			x1, y1 = self._calculate_snap(mouse=[mx,my])
 			x2 = x1 + self.w
 			y2 = y1 + self.h
 		self.canvas.coords(self._drag_data["grab"], x1, y1, x2, y2)
@@ -45,7 +51,7 @@ class TSB(Frame):
 			self.canvas.coords(self._drag_data["window"],
 							   newx, newy)
 
-	def calculate_snap(self, mouse=None, cell=None):
+	def _calculate_snap(self, mouse=None, cell=None):
 		if cell is not None:
 			newx = cell[0] * self.w
 			newy = cell[1] * self.h
@@ -67,7 +73,7 @@ class TSB(Frame):
 		self.canvas.delete("grid")
 
 	def add_window(self, window, size=[1,1], cell=None, mouse=None):
-		newx, newy = self.calculate_snap(cell=cell, mouse=mouse) #grid point
+		newx, newy = self._calculate_snap(cell=cell, mouse=mouse) #grid point
 		print newx, newy
 		newh = self.h - self.buff #to show grab
 		newy = newy + self.buff + (newh / 2) #to show grab
@@ -78,7 +84,7 @@ class TSB(Frame):
 
 	def _create_token(self, color, cell=None, mouse=None):
 		'''Create a token at the given coordinate in the given color'''
-		x, y = self.calculate_snap(cell=cell, mouse=mouse)
+		x, y = self._calculate_snap(cell=cell, mouse=mouse)
 		print x, y
 		self.canvas.create_rectangle(x, y, x+self.w, y+self.h,
 									 outline=color, fill=color,
@@ -123,6 +129,12 @@ class TSB(Frame):
 		self._drag_data["x"] = event.x
 		self._drag_data["y"] = event.y
 
+	def toggle_mode(self, mode=None):
+		modes = ["move", "stay"]
+		if mode is None or mode not in modes:
+			modes.remove(self.mode) #removes current mode
+			mode = modes[0] #sets mode to remaining mode
+		self.mode = mode
 
 if __name__ == '__main__':
 	root = Tk()

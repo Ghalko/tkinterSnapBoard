@@ -12,7 +12,7 @@ class TSB(Frame):
 		self.size = size
 		self.buff = buff
 		self.canvas = Canvas(self.f, width=self.w*size,
-												 height=self.h*size)
+							 height=self.h*size)
 		self.canvas.pack(fill="both", expand=True)
 		self._drag_data = {"x": 0, "y": 0, "grab": None}
 		self._create_token("white", cell=[1,1])
@@ -24,14 +24,8 @@ class TSB(Frame):
 		self.canvas.tag_bind("token", "<B1-Motion>",
 							 self.OnTokenMotion)
 		self.mode = None
-		self.toggle_mode(mode="move")
-		#To be moved or removed VV
-		self.show_grid()
-		self.testframe = Frame(self.f, bd=1, relief=RAISED)
-		self.testframe2 = Frame(self.f, bd=1, relief=RAISED)
-		self.add_window(self.testframe, cell=[1,1])
-		self.add_window(self.testframe2, cell=[2,2])
-		#self.remove_grid()
+		self.wlist = []
+		self.toggle_mode(mode="stay")
 
 	def snap_grab(self, mx, my):
 		"""Snaps grab portion into cell"""
@@ -50,6 +44,8 @@ class TSB(Frame):
 			newy = coords[1] + (self.buff + self.h) / 2
 			self.canvas.coords(self._drag_data["window"],
 							   newx, newy)
+			x, y = self._calculate_cell((newx, newy))
+			self.wlist.append([x,y])
 
 	def _calculate_snap(self, mouse=None, cell=None):
 		if cell is not None:
@@ -60,6 +56,12 @@ class TSB(Frame):
 			newy = int(mouse[1]/self.h) * self.h
 		return newx, newy
 
+	def _calculate_cell(self, coords):
+		x, y = coords
+		col = int(x/self.w)
+		row = int(y/self.h)
+		return col, row
+
 	def show_grid(self):
 		for x in range(self.size+1):
 			dx = x * self.w
@@ -68,24 +70,28 @@ class TSB(Frame):
 				self.canvas.create_oval(dx-2, dy-2, dx+2, dy+2,
 										outline="black", fill="black",
 										tags="grid")
+				if x != self.size and y != self.size and [x,y] in self.wlist:
+					color = "#" + hex(0xDDDDFF - (x+y) * 0x111111)[-6:]
+					self._create_token(color, cell=[x,y])
 
 	def remove_grid(self):
 		self.canvas.delete("grid")
+		self.canvas.delete("token")
 
 	def add_window(self, window, size=[1,1], cell=None, mouse=None):
 		newx, newy = self._calculate_snap(cell=cell, mouse=mouse) #grid point
-		print newx, newy
 		newh = self.h - self.buff #to show grab
 		newy = newy + self.buff + (newh / 2) #to show grab
 		newx = newx + (self.w / 2)
 		self.canvas.create_window(newx, newy, window=window,
 								  height=newh, width=self.w,
 								  tags="window")
+		x, y = self._calculate_cell((newx, newy))
+		self.wlist.append([x,y])
 
 	def _create_token(self, color, cell=None, mouse=None):
 		'''Create a token at the given coordinate in the given color'''
 		x, y = self._calculate_snap(cell=cell, mouse=mouse)
-		print x, y
 		self.canvas.create_rectangle(x, y, x+self.w, y+self.h,
 									 outline=color, fill=color,
 									 tags="token")
@@ -96,16 +102,19 @@ class TSB(Frame):
 		self._drag_data["grab"] = self.canvas.find_closest(event.x, event.y)[0]
 		self._drag_data["orig_coords"] = self.canvas.coords(self._drag_data["grab"])
 		x1, y1, x2, y2 = tuple(self._drag_data["orig_coords"])
-		print self.canvas.find_enclosed(x1-1, y1-1, x2+1, y2+1)
 		try:
-			self._drag_data["window"] = self.canvas.find_enclosed(x1-1, y1-1, x2+1, y2+1)[1]
+			win = list(self.canvas.find_enclosed(x1-1, y1-1, x2+1, y2+1))
+			win.remove(self._drag_data["grab"])
+			self._drag_data["window"] = win[0]
 		except:
 			self._drag_data["window"] = None
 		self._drag_data["x"] = event.x
 		self._drag_data["y"] = event.y
-		print self._drag_data
+		#remove window from list
+		x, y = self._calculate_cell((event.x, event.y))
+		if [x,y] in self.wlist:
+			self.wlist.remove([x,y])
 		
-
 	def OnTokenButtonRelease(self, event):
 		'''End drag of an object'''
 		#check for overlapping tokens
@@ -135,6 +144,11 @@ class TSB(Frame):
 			modes.remove(self.mode) #removes current mode
 			mode = modes[0] #sets mode to remaining mode
 		self.mode = mode
+		if mode == "move":
+			self.show_grid()
+		else:
+			self.remove_grid()
+
 
 if __name__ == '__main__':
 	root = Tk()

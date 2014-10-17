@@ -15,8 +15,6 @@ class TSB(Frame):
 							 height=self.h*size)
 		self.canvas.pack(fill="both", expand=True)
 		self._drag_data = {"x": 0, "y": 0, "grab": None}
-		self._create_token("white", cell=[1,1])
-		self._create_token("black", cell=[2,2])
 		self.canvas.tag_bind("token", "<ButtonPress-1>",
 							 self.OnTokenButtonPress)
 		self.canvas.tag_bind("token", "<ButtonRelease-1>",

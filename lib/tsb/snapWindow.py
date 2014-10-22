@@ -23,19 +23,23 @@ class WindowHandler(object):
 		"""Replaces staged window coords with new coords"""
 		if self.stage is not None:
 			self.stage.set_coords(coords)
-			self.list.ammend(self.stage)
+			self.list.append(self.stage)
 			self.stage = None
 
-	def stage(self, coords):
-		for i in len(self.list):
+	def to_stage(self, coords):
+		for i in range(len(self.list)):
 			if self.list[i].get_coords() == coords:
+				print "here2"
 				self.stage = self.list.pop(i)
 				return
 
-	def get_size(self, coords):
-		for win in self.list:
-			if win.get_coords() == coords:
-				return win.get_size()
+	def get_size(self, coords=None):
+		if coords is None and self.stage is not None:
+			return self.stage.get_size()
+		elif coords is not None:
+			for win in self.list:
+				if win.get_coords() == coords:
+					return win.get_size()
 		return None
 
 class Window(object):

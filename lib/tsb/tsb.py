@@ -31,16 +31,18 @@ class TSB(Frame):
 		x1, y1, x2, y2 = tuple(self._drag_data["orig_coords"])
 		if len(self.canvas.find_overlapping(mx-1, my-1, mx+1, my+1)) <= 1:
 			x1, y1 = self._calculate_snap(mouse=[mx,my])
-			x2 = x1 + self.w
-			y2 = y1 + self.h
+			size = self.wlist.get_size()
+			x2 = x1 + self.w * size[0]
+			y2 = y1 + self.h * size[1]
 		self.canvas.coords(self._drag_data["grab"], x1, y1, x2, y2)
 
 	def snap_window(self):
 		"""Snaps window into cell following its grab"""
 		if self._drag_data["window"] is not None:
 			coords = self.canvas.coords(self._drag_data["grab"])
-			newx = coords[0] + self.w / 2
-			newy = coords[1] + (self.buff + self.h) / 2
+			size = self.wlist.get_size()
+			newx = coords[0] + (self.w * size[0]) / 2
+			newy = coords[1] + (self.buff + (self.h * size[1])) / 2
 			self.canvas.coords(self._drag_data["window"],
 							   newx, newy)
 			x, y = self._calculate_cell((newx, newy))
@@ -72,6 +74,7 @@ class TSB(Frame):
 				if x != self.size and y != self.size and [x,y] in self.wlist:
 					color = "#" + hex(0xDDDDFF - (x+y) * 0x111111)[-6:]
 					size = self.wlist.get_size([x,y])
+					print x, y
 					self._create_token(color, size=size, cell=[x,y])
 
 	def remove_grid(self):
@@ -87,8 +90,11 @@ class TSB(Frame):
 		self.canvas.create_window(newx, newy, window=window,
 								  height=newh, width=neww,
 								  tags="window")
-		x, y = self._calculate_cell((newx, newy))
-		self.wlist.add_window([x,y], size)
+		if cell is not None:
+			self.wlist.add_window(cell, size)
+		else:
+			x, y = self._calculate_cell((newx, newy))
+			self.wlist.add_window([x,y], size)
 
 	def _create_token(self, color, size=[1,1], cell=None, mouse=None):
 		'''Create a token at the given coordinate in the given color'''
@@ -115,7 +121,8 @@ class TSB(Frame):
 		#remove window from list
 		x, y = self._calculate_cell((event.x, event.y))
 		if [x,y] in self.wlist:
-			self.wlist.remove([x,y])
+			print "here"
+			self.wlist.to_stage([x,y])
 		
 	def OnTokenButtonRelease(self, event):
 		'''End drag of an object'''

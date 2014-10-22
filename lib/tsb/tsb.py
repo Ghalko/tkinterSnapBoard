@@ -45,7 +45,7 @@ class TSB(Frame):
 			newy = coords[1] + (self.buff + (self.h * size[1])) / 2
 			self.canvas.coords(self._drag_data["window"],
 							   newx, newy)
-			x, y = self._calculate_cell((newx, newy))
+			x, y = self._calculate_cell((coords[0], coords[1]))
 			self.wlist.replace([x,y])
 
 	def _calculate_snap(self, mouse=None, cell=None):
@@ -119,7 +119,10 @@ class TSB(Frame):
 		self._drag_data["x"] = event.x
 		self._drag_data["y"] = event.y
 		#remove window from list
-		x, y = self._calculate_cell((event.x, event.y))
+		x, y = self._calculate_cell((x1, y1))
+		print x, y
+		for l in self.wlist.list:
+			print l.coords
 		if [x,y] in self.wlist:
 			print "here"
 			self.wlist.to_stage([x,y])

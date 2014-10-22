@@ -18,7 +18,7 @@ class Example(Frame):
 		Label(testframe, text="Hello World!").pack()
 		testframe2 = Frame(self.f, bd=1, relief=RAISED)
 		self.tsb.add_window(testframe, cell=[1,1])
-		self.tsb.add_window(testframe2, cell=[2,2])
+		self.tsb.add_window(testframe2, cell=[2,2], size=[2,2])
 
 	def exit(self):
 		pass

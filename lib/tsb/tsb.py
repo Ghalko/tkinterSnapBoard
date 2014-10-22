@@ -1,4 +1,5 @@
 from Tkinter import *
+from snapWindow import WindowHandler as wh
 
 class TSB(Frame):
 	"""tkinter snap board - ref:
@@ -22,7 +23,7 @@ class TSB(Frame):
 		self.canvas.tag_bind("token", "<B1-Motion>",
 							 self.OnTokenMotion)
 		self.mode = None
-		self.wlist = []
+		self.wlist = wh()
 		self.toggle_mode(mode="stay")
 
 	def snap_grab(self, mx, my):
@@ -43,7 +44,7 @@ class TSB(Frame):
 			self.canvas.coords(self._drag_data["window"],
 							   newx, newy)
 			x, y = self._calculate_cell((newx, newy))
-			self.wlist.append([x,y])
+			self.wlist.replace([x,y])
 
 	def _calculate_snap(self, mouse=None, cell=None):
 		if cell is not None:
@@ -70,7 +71,8 @@ class TSB(Frame):
 										tags="grid")
 				if x != self.size and y != self.size and [x,y] in self.wlist:
 					color = "#" + hex(0xDDDDFF - (x+y) * 0x111111)[-6:]
-					self._create_token(color, cell=[x,y])
+					size = self.wlist.get_size([x,y])
+					self._create_token(color, size=size, cell=[x,y])
 
 	def remove_grid(self):
 		self.canvas.delete("grid")
@@ -78,19 +80,21 @@ class TSB(Frame):
 
 	def add_window(self, window, size=[1,1], cell=None, mouse=None):
 		newx, newy = self._calculate_snap(cell=cell, mouse=mouse) #grid point
-		newh = self.h - self.buff #to show grab
+		newh = (size[1] * self.h) - self.buff #to show grab
+		neww = size[0] * self.w
 		newy = newy + self.buff + (newh / 2) #to show grab
-		newx = newx + (self.w / 2)
+		newx = newx + (neww / 2)
 		self.canvas.create_window(newx, newy, window=window,
-								  height=newh, width=self.w,
+								  height=newh, width=neww,
 								  tags="window")
 		x, y = self._calculate_cell((newx, newy))
-		self.wlist.append([x,y])
+		self.wlist.add_window([x,y], size)
 
-	def _create_token(self, color, cell=None, mouse=None):
+	def _create_token(self, color, size=[1,1], cell=None, mouse=None):
 		'''Create a token at the given coordinate in the given color'''
 		x, y = self._calculate_snap(cell=cell, mouse=mouse)
-		self.canvas.create_rectangle(x, y, x+self.w, y+self.h,
+		self.canvas.create_rectangle(x, y, x+(self.w*size[0]),
+									 y+(self.h*size[1]),
 									 outline=color, fill=color,
 									 tags="token")
 

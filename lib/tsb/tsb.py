@@ -38,10 +38,10 @@ class TSB(Frame):
 		for i in range(len(items)):
 			if self.canvas.itemcget(items[i], 'tags') == 'grid':
 				rm_grid.append(i)
-		for i in rm_grid.reverse():
+		rm_grid.reverse()
+		for i in rm_grid:
 			items.pop(i)
-		print items
-		if len(items) <= 2:
+		if len(items) <= 1:
 			x1 = nx
 			y1 = ny
 			x2 = x1 + self.w * size[0]

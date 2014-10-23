@@ -29,7 +29,6 @@ class WindowHandler(object):
 	def to_stage(self, coords):
 		for i in range(len(self.list)):
 			if self.list[i].get_coords() == coords:
-				print "here2"
 				self.stage = self.list.pop(i)
 				return
 

@@ -29,9 +29,21 @@ class TSB(Frame):
 	def snap_grab(self, mx, my):
 		"""Snaps grab portion into cell"""
 		x1, y1, x2, y2 = tuple(self._drag_data["orig_coords"])
-		if len(self.canvas.find_overlapping(mx-1, my-1, mx+1, my+1)) <= 1:
-			x1, y1 = self._calculate_snap(mouse=[mx,my])
-			size = self.wlist.get_size()
+		nx, ny = self._calculate_snap(mouse=[mx,my])
+		size = self.wlist.get_size()
+		items = list(self.canvas.find_enclosed(nx-1, ny-1,
+								  nx+(self.w * size[0])+1,
+								  y2+(self.h * size[1])+1))
+		rm_grid = []
+		for i in range(len(items)):
+			if self.canvas.itemcget(items[i], 'tags') == 'grid':
+				rm_grid.append(i)
+		for i in rm_grid.reverse():
+			items.pop(i)
+		print items
+		if len(items) <= 2:
+			x1 = nx
+			y1 = ny
 			x2 = x1 + self.w * size[0]
 			y2 = y1 + self.h * size[1]
 		self.canvas.coords(self._drag_data["grab"], x1, y1, x2, y2)
@@ -74,7 +86,6 @@ class TSB(Frame):
 				if x != self.size and y != self.size and [x,y] in self.wlist:
 					color = "#" + hex(0xDDDDFF - (x+y) * 0x111111)[-6:]
 					size = self.wlist.get_size([x,y])
-					print x, y
 					self._create_token(color, size=size, cell=[x,y])
 
 	def remove_grid(self):
@@ -120,11 +131,7 @@ class TSB(Frame):
 		self._drag_data["y"] = event.y
 		#remove window from list
 		x, y = self._calculate_cell((x1, y1))
-		print x, y
-		for l in self.wlist.list:
-			print l.coords
 		if [x,y] in self.wlist:
-			print "here"
 			self.wlist.to_stage([x,y])
 		
 	def OnTokenButtonRelease(self, event):
